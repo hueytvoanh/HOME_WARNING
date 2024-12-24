@@ -125,8 +125,13 @@
 #define GSM_SMS_ERROR
 #define GSM_FUNCTION
 #define SMS_WARNING
-#define WARN_AC
-#define WARN_ACQ
+//#define WARN_AC
+//#define WARN_ACQ
+#define WARN_PIR
+#define WARN_FRONT_DOOR
+#define WARN_BACK_DOOR
+#define WARN_SLEEP_DOOR
+
 //#define WARN_DOOR
 //#define WARN_TEMP
 //#define MQTT_FUNCTION
@@ -150,7 +155,7 @@ char myphone3[11] = "";
 char RxBuff[256]= "";
 char atsName[10] = "ATS      ";
 char msgChar[SMSLENGTH] = "";
-unsigned long now, currentMillis, startCheckingTime;
+unsigned long now, currentMillis, startCheckingTime, startRunningTime;
 float factorInM, factorInG, factorAcq;
 boolean mainState, mainStateLast, acqState, acqStateLast, doorState, doorStateLast, tempState, tempStateLast, loadState;
 boolean phone2Exist, phone3Exist;
@@ -165,6 +170,7 @@ float vThConfig;
 float temp_L_Config, temp_H_Config, vAcq_L_Config, vAcq_H_Config;
 boolean configVoltage;
 char setUpState;
+boolean smsCheckInfor, smsControlRelay;
 
 //////////////////////////////////////////////////////////////////////////////////////////////MQTT///////////////////////////////////////////////////////////////////////////////////////////////
 #define TIME_UPLOAD_SECOND                  10
@@ -200,7 +206,9 @@ char setUpState;
 #define SYS_SMS_PHONE3_ADDED                38
 #define SYS_SMS_PHONE3_ADDED_SENDING        39
 #define SYSTEM_IDLE                         40
-#define SYSTEM_RUNNING                      41
+#define SYSTEM_GO2_RUNNING                  41
+#define SYSTEM_RUNNING                      42
+#define SYSTEM_WARNING                      43
 
 #define SERIAL_CHECK_MS                     20000   // 20 ms
  
@@ -279,7 +287,10 @@ const char string_0[SMSLENGTH] PROGMEM = "START";
                                              "15.5||15.5||55.5||NOK||DOOR ----- \n";
     const char string_3[SMSLENGTH] PROGMEM = "ADDED PHONE2 xxxxxxxxxx \n";
     const char string_4[SMSLENGTH] PROGMEM = "ADDED PHONE3 xxxxxxxxxx \n"; 
-    const char* const string_table[] PROGMEM = {string_0, string_1, string_2, string_3, string_4};
+    const char string_5[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO NGHI \n";
+    const char string_6[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO GIAM SAT \n";
+    const char string_7[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO CANH BAO \n"; 
+    const char* const string_table[] PROGMEM = {string_0, string_1, string_2, string_3, string_4, string_5, string_6, string_7};
 
 byte nump[] = {
  B11111100, // Zero
@@ -1332,87 +1343,56 @@ void getSensorValue(void){
       }
   }
 
+  #ifdef WARN_PIR
   if(digitalRead(INPUT_PIR) == PIR_WARNING_LEVEL){
       pirState = false;
+      if((systemState == SYSTEM_RUNNING)){
+          systemState = SYSTEM_WARNING;  
+      }
   }
   else{
       pirState = true;
   }
+  #endif
 
+  #ifdef WARN_FRONT_DOOR
   if(digitalRead(INPUT_FRONT_DOOR) == FRONTDOOR_WARNING_LEVEL){
       frontDoorState = false;
+      if((systemState == SYSTEM_RUNNING)){
+          systemState = SYSTEM_WARNING;  
+      }
   }
   else{
       frontDoorState = true;
   }
+  #endif
 
+
+  #ifdef WARN_BACK_DOOR
   if(digitalRead(INPUT_BACK_DOOR) == BACKDOOR_WARNING_LEVEL){
       backDoorState = false;
+      if((systemState == SYSTEM_RUNNING)){
+          systemState = SYSTEM_WARNING;  
+      }
   }
   else{
       backDoorState = true;
   }
+  #endif
 
+  #ifdef WARN_SLEEP_DOOR
   if(digitalRead(INPUT_SLEEP_DOOR) == SLEEPDOOR_WARNING_LEVEL){
       sleepDoorState = false;
+      if((systemState == SYSTEM_RUNNING)){
+          systemState = SYSTEM_WARNING;  
+      }
   }
   else{
       sleepDoorState = true;
   }
-
-  
-
-
-
-
-  #ifdef WARN_AC
-  if((mainStateLast == true)&&(mainState == false)){
-     mainStateLast = false;
-     systemState = SYS_SMS_INFOR_OUT;      
-  }
-  if((mainStateLast == false)&&(mainState == true)){
-     mainStateLast = true;
-     systemState = SYS_SMS_INFOR_OUT;
-  }
   #endif
 
-  #ifdef WARN_DOOR
-  if((doorStateLast == false)&&(doorState == true)){
-     doorStateLast = true;
-     systemState = SYS_SMS_INFOR_OUT;
-  }
-  if((doorStateLast == true)&&(doorState == false)){
-     doorStateLast = false;
-     systemState = SYS_SMS_INFOR_OUT;
-  }
-  #endif
-
-  #ifdef WARN_ACQ
-  if((acqStateLast == false)&&(acqState == true)){
-     acqStateLast = true;
-     systemState = SYS_SMS_INFOR_OUT;
-  }
-  if((acqStateLast == true)&&(acqState == false)){
-     acqStateLast = false;
-     systemState = SYS_SMS_INFOR_OUT;
-  }
-  #endif
-
-  if(tempValue < 0){
-      tempValue = 0;
-  }
-  
-  #ifdef WARN_TEMP
-  if((tempStateLast == false)&&(tempState == true)){
-     tempStateLast = true;
-     systemState = SYS_SMS_INFOR_OUT;
-  }
-  if((tempStateLast == true)&&(tempState == false)){
-     tempStateLast = false;
-     systemState = SYS_SMS_INFOR_OUT;
-  }
-  
-  #endif
+ 
 }
 
 
@@ -1426,7 +1406,8 @@ void relayControl(int relayTimer){
         else{
             delay(60000);    
         }
-        digitalWrite(OUTPUT_RELAY, RELAY_DEACTIVE);       
+        digitalWrite(OUTPUT_RELAY, RELAY_DEACTIVE);  
+        relayActive = false;     
     }
     else{
         digitalWrite(OUTPUT_RELAY, RELAY_DEACTIVE);       
@@ -1438,9 +1419,10 @@ int checkInputButtons(){
 
     if(digitalRead(MENU_BUTTON)==LOW){
         if(systemState == SYSTEM_IDLE) {
-           systemState = SYSTEM_RUNNING;
+           systemState = SYSTEM_GO2_RUNNING;
+           startRunningTime = millis();
            for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
-             displayLed7(vAcq_L_Config, LED7_ACQ_L);  
+             displayLed7(vAcq_L_Config, LED7_GSM_CODE_E1);  
            }
         }
         
@@ -1454,15 +1436,36 @@ int checkInputButtons(){
 }
 
 int displaySystemState(){
-    if(systemState == SYSTEM_IDLE) {           
-        for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
-            displayLed7(vAcq_L_Config, LED7_ACQ_L);  
-        }
-    }
-    else{
-        for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
-            displayLed7(vAcq_L_Config, LED7_ACQ_L);  
-        }
+    switch(systemState){
+        case SYSTEM_IDLE:
+            for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
+                displayLed7(vAcq_L_Config, LED7_GSM_CODE_E1);  
+            }
+            break;
+        case SYSTEM_GO2_RUNNING:
+            for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
+                displayLed7(vAcq_L_Config, LED7_GSM_CODE_E2);  
+            }
+            now = millis();
+            if((now - startRunningTime) > 60000){
+                systemState = SYSTEM_RUNNING;
+                startRunningTime = 0;
+            }
+            break;  
+        case SYSTEM_RUNNING:
+            for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
+                displayLed7(vAcq_L_Config, LED7_GSM_CODE_E3);  
+            }
+            break;    
+        case SYSTEM_WARNING:
+            makeCall();
+            relayActive = true;
+            for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
+                displayLed7(vAcq_L_Config, LED7_GSM_CODE_E4);  
+            }
+            break;  
+        default:
+            break;
     }
   
   return 1;
@@ -1616,60 +1619,19 @@ void smsInfor(){
 }
 
 void sendSmsTaskFunction(){
-  switch(systemState){
-     case SYS_SMS_INFOR_OUT:
-         startCheckingTime = 0;
-         startMqttCheckingTime = 0;
-         strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[2])));
-         smsInfor();
-         GsmMakeSmsChar(msgChar);
-         systemState = SYS_SMS_INFOR_OUT_SENDING;
-         break;
-         
-     case SYS_SMS_PHONE2_ADDED:
-         startCheckingTime = 0;
-         startMqttCheckingTime = 0;
-         strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[3]))); 
-         
-         msgChar[13] = myphone2[0]; 
-         msgChar[14] = myphone2[1]; 
-         msgChar[15] = myphone2[2]; 
-         msgChar[16] = myphone2[3]; 
-         msgChar[17] = myphone2[4]; 
-         msgChar[18] = myphone2[5]; 
-         msgChar[19] = myphone2[6]; 
-         msgChar[20] = myphone2[7]; 
-         msgChar[21] = myphone2[8]; 
-         msgChar[22] = myphone2[9]; 
-                
-         GsmMakeSmsChar(msgChar);
-         systemState = SYS_SMS_PHONE2_ADDED_SENDING;
-         break;
-     
-     case SYS_SMS_PHONE3_ADDED:
-         startCheckingTime = 0;
-         startMqttCheckingTime = 0;
-         strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[4])));        
 
-         msgChar[13] = myphone3[0]; 
-         msgChar[14] = myphone3[1]; 
-         msgChar[15] = myphone3[2]; 
-         msgChar[16] = myphone3[3]; 
-         msgChar[17] = myphone3[4]; 
-         msgChar[18] = myphone3[5]; 
-         msgChar[19] = myphone3[6]; 
-         msgChar[20] = myphone3[7]; 
-         msgChar[21] = myphone3[8]; 
-         msgChar[22] = myphone3[9]; 
+     if(systemState == SYSTEM_IDLE ){
+          strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[5])));
+     }
+     if(systemState == SYSTEM_RUNNING ){
+          strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[6])));
+     }
+     if(systemState == SYSTEM_WARNING ){
+          strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));
+     }
+     GsmMakeSmsChar(msgChar); 
+     
          
-         
-         GsmMakeSmsChar(msgChar);
-         systemState = SYS_SMS_PHONE2_ADDED_SENDING;
-         break;
-    
-    default:
-        break;
-  }
 }
 
 int readROMData(){  
@@ -2199,6 +2161,9 @@ void setup() {
   mainStateLast = true;
   pulsecount = 0;
   setupCount = 0;
+  startRunningTime = 0;
+  smsCheckInfor = false;
+  smsControlRelay = false;
 
   #ifdef ACCOUNT_ADMIN
   vinaNetwork = false;
