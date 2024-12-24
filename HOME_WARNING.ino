@@ -128,9 +128,9 @@
 //#define WARN_AC
 //#define WARN_ACQ
 #define WARN_PIR
-#define WARN_FRONT_DOOR
-#define WARN_BACK_DOOR
-#define WARN_SLEEP_DOOR
+//#define WARN_FRONT_DOOR
+//#define WARN_BACK_DOOR
+//#define WARN_SLEEP_DOOR
 
 //#define WARN_DOOR
 //#define WARN_TEMP
