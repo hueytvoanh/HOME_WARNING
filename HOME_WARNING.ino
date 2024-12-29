@@ -170,7 +170,7 @@ float vThConfig;
 float temp_L_Config, temp_H_Config, vAcq_L_Config, vAcq_H_Config;
 boolean configVoltage;
 char setUpState;
-boolean smsCheckInfor, smsControlRelay;
+boolean smsCheckInfor, smsControlRelay, sendSms;
 
 //////////////////////////////////////////////////////////////////////////////////////////////MQTT///////////////////////////////////////////////////////////////////////////////////////////////
 #define TIME_UPLOAD_SECOND                  10
@@ -1125,20 +1125,20 @@ void displayLed7(float dataIn, int type){
     case LED7_GSM_CODE_E1:
        led_100 = 21;
        led_10 = 1;
-       led_1 = 10;
-       led_dot = 10; 
+       led_1 = 11;
+       led_dot = 11; 
        break;
     case LED7_GSM_CODE_E2:
        led_100 = 21;
        led_10 = 2;
-       led_1 = 10;
-       led_dot = 10; 
+       led_1 = 11;
+       led_dot = 11; 
        break;
     case LED7_GSM_CODE_E3:
        led_100 = 21;
        led_10 = 3;
-       led_1 = 10;
-       led_dot = 10; 
+       led_1 = 11;
+       led_dot = 11; 
        break;
     case LED7_GSM_CODE_E4:
        led_100 = 21;
@@ -1449,6 +1449,9 @@ int displaySystemState(){
             now = millis();
             if((now - startRunningTime) > 60000){
                 systemState = SYSTEM_RUNNING;
+                for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
+                    displayLed7(vAcq_L_Config, LED7_GSM_CODE_E3);  
+                }
                 startRunningTime = 0;
             }
             break;  
@@ -1619,17 +1622,19 @@ void smsInfor(){
 }
 
 void sendSmsTaskFunction(){
-
+     /*
      if(systemState == SYSTEM_IDLE ){
           strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[5])));
      }
      if(systemState == SYSTEM_RUNNING ){
           strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[6])));
      }
-     if(systemState == SYSTEM_WARNING ){
-          strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));
+     */
+     if((systemState == SYSTEM_WARNING )&&(sendSms==true)){
+          strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));          
+          sendSms = false;
+          GsmMakeSmsChar(msgChar);           
      }
-     GsmMakeSmsChar(msgChar); 
      
          
 }
@@ -2164,6 +2169,7 @@ void setup() {
   startRunningTime = 0;
   smsCheckInfor = false;
   smsControlRelay = false;
+  sendSms = false;
 
   #ifdef ACCOUNT_ADMIN
   vinaNetwork = false;
@@ -2194,10 +2200,10 @@ void setup() {
 void loop() {
   checkInputButtons();
   getSensorValue();
-  displayAc();
-  displayCurent();
+  //displayAc();
+  //displayCurent();
   relayControl(5);
-  displayTemp();
+  //displayTemp();
   displaySystemState();
   #ifdef GSM_FUNCTION
   sendSmsTaskFunction();   
