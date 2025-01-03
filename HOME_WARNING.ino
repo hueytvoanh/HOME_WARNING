@@ -127,8 +127,8 @@
 #define SMS_WARNING
 //#define WARN_AC
 //#define WARN_ACQ
-#define WARN_PIR
-//#define WARN_FRONT_DOOR
+//#define WARN_PIR
+#define WARN_FRONT_DOOR
 //#define WARN_BACK_DOOR
 //#define WARN_SLEEP_DOOR
 
@@ -171,6 +171,7 @@ float temp_L_Config, temp_H_Config, vAcq_L_Config, vAcq_H_Config;
 boolean configVoltage;
 char setUpState;
 boolean smsCheckInfor, smsControlRelay, sendSms;
+boolean warnPir, warnFrontDoor, warnBackDoor, warnSleepDoor;
 
 //////////////////////////////////////////////////////////////////////////////////////////////MQTT///////////////////////////////////////////////////////////////////////////////////////////////
 #define TIME_UPLOAD_SECOND                  10
@@ -514,7 +515,10 @@ int checkBuff(){
 
     outputInfor = strstr (RxBuff,"START");
     if(outputInfor) {
-        smsControl = 2;
+        warnPir = true;
+        warnFrontDoor = true;
+        warnBackDoor = true;
+        warnSleepDoor = true;
         strcpy(RxBuff, "");
         return 1;
     } 
@@ -1346,8 +1350,9 @@ void getSensorValue(void){
   #ifdef WARN_PIR
   if(digitalRead(INPUT_PIR) == PIR_WARNING_LEVEL){
       pirState = false;
-      if((systemState == SYSTEM_RUNNING)){
+      if((systemState == SYSTEM_RUNNING)&&(warnPir==true)){
           systemState = SYSTEM_WARNING;  
+          warnPir = false;
       }
   }
   else{
@@ -1358,8 +1363,9 @@ void getSensorValue(void){
   #ifdef WARN_FRONT_DOOR
   if(digitalRead(INPUT_FRONT_DOOR) == FRONTDOOR_WARNING_LEVEL){
       frontDoorState = false;
-      if((systemState == SYSTEM_RUNNING)){
+      if((systemState == SYSTEM_RUNNING)&&(warnFrontDoor)){
           systemState = SYSTEM_WARNING;  
+          warnFrontDoor = false;
       }
   }
   else{
@@ -1371,8 +1377,9 @@ void getSensorValue(void){
   #ifdef WARN_BACK_DOOR
   if(digitalRead(INPUT_BACK_DOOR) == BACKDOOR_WARNING_LEVEL){
       backDoorState = false;
-      if((systemState == SYSTEM_RUNNING)){
+      if((systemState == SYSTEM_RUNNING)&&(warnBackDoor)){
           systemState = SYSTEM_WARNING;  
+          warnBackDoor = false;
       }
   }
   else{
@@ -1383,8 +1390,9 @@ void getSensorValue(void){
   #ifdef WARN_SLEEP_DOOR
   if(digitalRead(INPUT_SLEEP_DOOR) == SLEEPDOOR_WARNING_LEVEL){
       sleepDoorState = false;
-      if((systemState == SYSTEM_RUNNING)){
+      if((systemState == SYSTEM_RUNNING)&&(warnSleepDoor)){
           systemState = SYSTEM_WARNING;  
+          warnSleepDoor = false;
       }
   }
   else{
@@ -1466,7 +1474,11 @@ int displaySystemState(){
             for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
                 displayLed7(vAcq_L_Config, LED7_GSM_CODE_E4);  
             }
-            break;  
+            break; 
+            makeCall();
+            systemState = SYSTEM_RUNNING;
+            strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));                    
+            GsmMakeSmsChar(msgChar);
         default:
             break;
     }
@@ -2169,7 +2181,31 @@ void setup() {
   startRunningTime = 0;
   smsCheckInfor = false;
   smsControlRelay = false;
-  sendSms = false;
+  sendSms = true;
+  
+  #ifdef WARN_PIR
+      warnPir = true;  
+  #else
+      warnPir = false;
+  #endif
+
+  #ifdef WARN_FRONT_DOOR
+      warnFrontDoor = true;  
+  #else
+      warnFrontDoor = false;
+  #endif
+
+  #ifdef WARN_FRONT_DOOR
+      warnBackDoor = true;  
+  #else
+      warnBackDoor = false;
+  #endif
+
+  #ifdef WARN_SLEEP_DOOR
+      warnSleepDoor = true;  
+  #else
+      warnSleepDoor = false;
+  #endif
 
   #ifdef ACCOUNT_ADMIN
   vinaNetwork = false;
@@ -2205,9 +2241,9 @@ void loop() {
   relayControl(5);
   //displayTemp();
   displaySystemState();
-  #ifdef GSM_FUNCTION
-  sendSmsTaskFunction();   
-  #endif
+  //#ifdef GSM_FUNCTION
+  //sendSmsTaskFunction();   
+  //#endif
   #ifdef MQTT_FUNCTION
   mqttUploadTaskFunction();
   #endif
