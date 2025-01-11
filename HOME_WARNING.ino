@@ -32,7 +32,7 @@
 #define DEC_BUTTON            11
 
 #define INPUT_PIR             1
-#define INPUT_FRONT_DOOR      1
+#define INPUT_FRONT_DOOR      10
 #define INPUT_BACK_DOOR       1
 #define INPUT_SLEEP_DOOR      1
 
@@ -1561,9 +1561,12 @@ void configIO(void){
   pinMode(clockPin  , OUTPUT);
 
   pinMode(OUTPUT_LOAD  , OUTPUT);
-  pinMode(OUTPUT_SIG  , OUTPUT);
+  //pinMode(OUTPUT_SIG  , OUTPUT);
+   
   pinMode(OUTPUT_RELAY  , OUTPUT);
 
+  pinMode(INPUT_FRONT_DOOR, INPUT);
+  
   pinMode(INPUT_ACQ  , INPUT);
   pinMode(INPUT_TMP  , INPUT);
   pinMode(INPUT_MAIN_PULSE  , INPUT);
