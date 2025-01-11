@@ -1377,7 +1377,7 @@ void getSensorValue(void){
   #ifdef WARN_BACK_DOOR
   if(digitalRead(INPUT_BACK_DOOR) == BACKDOOR_WARNING_LEVEL){
       backDoorState = false;
-      if((systemState == SYSTEM_RUNNING)&&(warnBackDoor)){
+      if((systemState == SYSTEM_RUNNING)&&(warnBackDoor==true)){
           systemState = SYSTEM_WARNING;  
           warnBackDoor = false;
       }
@@ -1390,7 +1390,7 @@ void getSensorValue(void){
   #ifdef WARN_SLEEP_DOOR
   if(digitalRead(INPUT_SLEEP_DOOR) == SLEEPDOOR_WARNING_LEVEL){
       sleepDoorState = false;
-      if((systemState == SYSTEM_RUNNING)&&(warnSleepDoor)){
+      if((systemState == SYSTEM_RUNNING)&&(warnSleepDoor==true)){
           systemState = SYSTEM_WARNING;  
           warnSleepDoor = false;
       }
