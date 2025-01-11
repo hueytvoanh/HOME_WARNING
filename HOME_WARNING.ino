@@ -33,7 +33,7 @@
 
 #define INPUT_PIR             1
 #define INPUT_FRONT_DOOR      10
-#define INPUT_BACK_DOOR       1
+#define INPUT_BACK_DOOR       6
 #define INPUT_SLEEP_DOOR      1
 
 #define PIR_WARNING_LEVEL        HIGH
@@ -129,7 +129,7 @@
 //#define WARN_ACQ
 //#define WARN_PIR
 #define WARN_FRONT_DOOR
-//#define WARN_BACK_DOOR
+#define WARN_BACK_DOOR
 //#define WARN_SLEEP_DOOR
 
 //#define WARN_DOOR
@@ -290,7 +290,7 @@ const char string_0[SMSLENGTH] PROGMEM = "START";
     const char string_4[SMSLENGTH] PROGMEM = "ADDED PHONE3 xxxxxxxxxx \n"; 
     const char string_5[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO NGHI \n";
     const char string_6[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO GIAM SAT \n";
-    const char string_7[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO CANH BAO \n"; 
+    const char string_7[SMSLENGTH] PROGMEM = "CANH BAO. HE THONG DANG BI XAM NHAP \n"; 
     const char* const string_table[] PROGMEM = {string_0, string_1, string_2, string_3, string_4, string_5, string_6, string_7};
 
 byte nump[] = {
@@ -1371,15 +1371,11 @@ void getSensorValue(void){
 
 
   #ifdef WARN_BACK_DOOR
-  if(digitalRead(INPUT_BACK_DOOR) == BACKDOOR_WARNING_LEVEL){
-      backDoorState = false;
-      if((systemState == SYSTEM_RUNNING)&&(warnBackDoor==true)){
+  if(warnBackDoor==true){
+      if(digitalRead(INPUT_BACK_DOOR) == BACKDOOR_WARNING_LEVEL){   
           systemState = SYSTEM_WARNING;  
           warnBackDoor = false;
       }
-  }
-  else{
-      backDoorState = true;
   }
   #endif
 
@@ -1562,6 +1558,7 @@ void configIO(void){
   pinMode(OUTPUT_RELAY  , OUTPUT);
 
   pinMode(INPUT_FRONT_DOOR, INPUT);
+  pinMode(INPUT_BACK_DOOR, INPUT);
   
   pinMode(INPUT_ACQ  , INPUT);
   pinMode(INPUT_TMP  , INPUT);
