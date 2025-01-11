@@ -20,7 +20,7 @@
 #define INPUT_TMP             A7                       //AIN1
 #define INPUTVOLTAGE          A0                       //AIN2
 #define INPUT_CURRENT         A1                       //AIN3
-#define INPUT_DOOR            5
+//#define INPUT_DOOR            5
 #define INPUT_AC              2
 
 #define OUTPUT_RELAY          9
@@ -34,7 +34,7 @@
 #define INPUT_PIR             1
 #define INPUT_FRONT_DOOR      10
 #define INPUT_BACK_DOOR       6
-#define INPUT_SLEEP_DOOR      1
+#define INPUT_SLEEP_DOOR      5
 
 #define PIR_WARNING_LEVEL        HIGH
 #define FRONTDOOR_WARNING_LEVEL  HIGH
@@ -130,7 +130,7 @@
 //#define WARN_PIR
 #define WARN_FRONT_DOOR
 #define WARN_BACK_DOOR
-//#define WARN_SLEEP_DOOR
+#define WARN_SLEEP_DOOR
 
 //#define WARN_DOOR
 //#define WARN_TEMP
@@ -1380,15 +1380,11 @@ void getSensorValue(void){
   #endif
 
   #ifdef WARN_SLEEP_DOOR
-  if(digitalRead(INPUT_SLEEP_DOOR) == SLEEPDOOR_WARNING_LEVEL){
-      sleepDoorState = false;
-      if((systemState == SYSTEM_RUNNING)&&(warnSleepDoor==true)){
+  if(warnSleepDoor==true){
+      if(digitalRead(INPUT_SLEEP_DOOR) == SLEEPDOOR_WARNING_LEVEL){
           systemState = SYSTEM_WARNING;  
           warnSleepDoor = false;
       }
-  }
-  else{
-      sleepDoorState = true;
   }
   #endif
 
@@ -1559,11 +1555,12 @@ void configIO(void){
 
   pinMode(INPUT_FRONT_DOOR, INPUT);
   pinMode(INPUT_BACK_DOOR, INPUT);
+  pinMode(INPUT_SLEEP_DOOR, INPUT);
   
   pinMode(INPUT_ACQ  , INPUT);
   pinMode(INPUT_TMP  , INPUT);
   pinMode(INPUT_MAIN_PULSE  , INPUT);
-  pinMode(INPUT_DOOR , INPUT_PULLUP);  
+  //pinMode(INPUT_DOOR , INPUT_PULLUP);  
 
   pinMode(MENU_BUTTON , INPUT_PULLUP);
   pinMode(INC_BUTTON , INPUT_PULLUP);
