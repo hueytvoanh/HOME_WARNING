@@ -1470,11 +1470,11 @@ int displaySystemState(){
             for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
                 displayLed7(vAcq_L_Config, LED7_GSM_CODE_E4);  
             }
-            break; 
             makeCall();
             systemState = SYSTEM_RUNNING;
             strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));                    
-            GsmMakeSmsChar(msgChar);
+            GsmMakeSmsChar(msgChar);            
+            break; 
         default:
             break;
     }
