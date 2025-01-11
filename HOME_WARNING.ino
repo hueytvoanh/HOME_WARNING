@@ -1361,15 +1361,11 @@ void getSensorValue(void){
   #endif
 
   #ifdef WARN_FRONT_DOOR
-  if(digitalRead(INPUT_FRONT_DOOR) == FRONTDOOR_WARNING_LEVEL){
-      frontDoorState = false;
-      if((systemState == SYSTEM_RUNNING)&&(warnFrontDoor==true)){
+  if(warnFrontDoor==true){
+      if(digitalRead(INPUT_FRONT_DOOR) == FRONTDOOR_WARNING_LEVEL){
           systemState = SYSTEM_WARNING;  
           warnFrontDoor = false;
       }
-  }
-  else{
-      frontDoorState = true;
   }
   #endif
 
