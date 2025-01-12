@@ -515,10 +515,24 @@ int checkBuff(){
 
     outputInfor = strstr (RxBuff,"START");
     if(outputInfor) {
+        systemState = SYSTEM_RUNNING;
+        
+        #ifdef WARN_PIR
         warnPir = true;
+        #endif
+       
+        #ifdef WARN_FRONT_DOOR
         warnFrontDoor = true;
+        #endif
+       
+        #ifdef WARN_BACK_DOOR
         warnBackDoor = true;
+        #endif
+       
+        #ifdef WARN_SLEEP_DOOR
         warnSleepDoor = true;
+        #endif
+        
         strcpy(RxBuff, "");
         return 1;
     } 
