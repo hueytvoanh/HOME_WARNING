@@ -216,6 +216,7 @@ char warnPlace;
 #define WARN_BACK_DOOR                      1
 #define WARN_FRONT_DOOR                     2
 #define WARN_SLEEP_DOOR                     3
+#define WARN_PIR                            4
 
 #define SERIAL_CHECK_MS                     20000   // 20 ms
  
@@ -297,8 +298,11 @@ unsigned long nowAc, previousAc;
     const char string_5[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO NGHI \n";
     const char string_6[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO GIAM SAT \n";
     const char string_7[SMSLENGTH] PROGMEM = "CANH BAO. HE THONG DANG BI XAM NHAP \n"; 
-    const char string_8[SMSLENGTH] PROGMEM = "HE THONG KHOI DONG. NHAN TIN START DE BAT DAU \n";
-    const char* const string_table[] PROGMEM = {string_0, string_1, string_2, string_3, string_4, string_5, string_6, string_7, string_8};
+    const char string_8[SMSLENGTH] PROGMEM = "HE THONG KHOI DONG. NHAN TIN START DE BAT DAU \n";    
+    const char string_9[SMSLENGTH] PROGMEM = "CANH BAO. HE THONG DANG BI XAM NHAP. CUA TRUOC \n"; 
+    const char string_10[SMSLENGTH] PROGMEM = "CANH BAO. HE THONG DANG BI XAM NHAP. CUA SAU \n"; 
+    const char string_11[SMSLENGTH] PROGMEM = "CANH BAO. HE THONG DANG BI XAM NHAP. PHONG NGU \n"; 
+    const char* const string_table[] PROGMEM = {string_0, string_1, string_2, string_3, string_4, string_5, string_6, string_7, string_8, string_9, string_10, string_11};
 
 byte nump[] = {
  B11111100, // Zero
@@ -1377,6 +1381,7 @@ void getSensorValue(void){
       if((systemState == SYSTEM_RUNNING)&&(warnPir==true)){
           systemState = SYSTEM_WARNING;  
           warnPir = false;
+          warnPlace = WARN_PIR;
       }
   }
   else{
@@ -1389,6 +1394,7 @@ void getSensorValue(void){
       if(digitalRead(INPUT_FRONT_DOOR) == FRONTDOOR_WARNING_LEVEL){
           systemState = SYSTEM_WARNING;  
           warnFrontDoor = false;
+          warnPlace = WARN_FRONT_DOOR;
       }
   }
   #endif
@@ -1398,7 +1404,8 @@ void getSensorValue(void){
   if(warnBackDoor==true){
       if(digitalRead(INPUT_BACK_DOOR) == BACKDOOR_WARNING_LEVEL){   
           systemState = SYSTEM_WARNING;  
-          warnBackDoor = false;
+          warnBackDoor = false;          
+          warnPlace = WARN_BACK_DOOR;
       }
   }
   #endif
@@ -1407,7 +1414,8 @@ void getSensorValue(void){
   if(warnSleepDoor==true){
       if(digitalRead(INPUT_SLEEP_DOOR) == SLEEPDOOR_WARNING_LEVEL){
           systemState = SYSTEM_WARNING;  
-          warnSleepDoor = false;
+          warnSleepDoor = false;    
+          warnPlace = WARN_SLEEP_DOOR;
       }
   }
   #endif
@@ -1488,7 +1496,21 @@ int displaySystemState(){
             }
             makeCall();
             systemState = SYSTEM_RUNNING;
-            strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));                    
+            switch(warnPlace){
+               case WARN_BACK_DOOR:
+                   strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[10])));                    
+                   break;               
+               case WARN_FRONT_DOOR:
+                   strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[9])));                    
+                   break;               
+               case WARN_SLEEP_DOOR:
+                   strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[11])));                    
+                   break;
+               default:
+                   strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));                    
+                   break;
+            }
+            //strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[7])));                    
             GsmMakeSmsChar(msgChar);            
             break; 
         default:
@@ -2199,6 +2221,7 @@ void setup() {
   smsCheckInfor = false;
   smsControlRelay = false;
   sendSms = true;
+  warnPlace = WARN_NONE;
   
   #ifdef WARN_PIR
       warnPir = true;  
