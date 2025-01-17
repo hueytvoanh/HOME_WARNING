@@ -172,6 +172,7 @@ boolean configVoltage;
 char setUpState;
 boolean smsCheckInfor, smsControlRelay, sendSms;
 boolean warnPir, warnFrontDoor, warnBackDoor, warnSleepDoor;
+char warnPlace;
 
 //////////////////////////////////////////////////////////////////////////////////////////////MQTT///////////////////////////////////////////////////////////////////////////////////////////////
 #define TIME_UPLOAD_SECOND                  10
@@ -210,6 +211,11 @@ boolean warnPir, warnFrontDoor, warnBackDoor, warnSleepDoor;
 #define SYSTEM_GO2_RUNNING                  41
 #define SYSTEM_RUNNING                      42
 #define SYSTEM_WARNING                      43
+
+#define WARN_NONE                           0
+#define WARN_BACK_DOOR                      1
+#define WARN_FRONT_DOOR                     2
+#define WARN_SLEEP_DOOR                     3
 
 #define SERIAL_CHECK_MS                     20000   // 20 ms
  
@@ -282,7 +288,7 @@ byte publishPacket_IU[ 56] =
 int pulsecount;
 unsigned long nowAc, previousAc;
 
-const char string_0[SMSLENGTH] PROGMEM = "START";
+    const char string_0[SMSLENGTH] PROGMEM = "START. HE THONG DA KHOI DONG";
     const char string_1[SMSLENGTH] PROGMEM = "Canh bao. Mat dien luoi \n";
     const char string_2[SMSLENGTH] PROGMEM = "Vbat||Ddien||Tmp||AC \n" 
                                              "15.5||15.5||55.5||NOK||DOOR ----- \n";
@@ -291,7 +297,8 @@ const char string_0[SMSLENGTH] PROGMEM = "START";
     const char string_5[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO NGHI \n";
     const char string_6[SMSLENGTH] PROGMEM = "HE THONG DANG TRONG CHE DO GIAM SAT \n";
     const char string_7[SMSLENGTH] PROGMEM = "CANH BAO. HE THONG DANG BI XAM NHAP \n"; 
-    const char* const string_table[] PROGMEM = {string_0, string_1, string_2, string_3, string_4, string_5, string_6, string_7};
+    const char string_8[SMSLENGTH] PROGMEM = "HE THONG KHOI DONG. NHAN TIN START DE BAT DAU \n";
+    const char* const string_table[] PROGMEM = {string_0, string_1, string_2, string_3, string_4, string_5, string_6, string_7, string_8};
 
 byte nump[] = {
  B11111100, // Zero
@@ -534,6 +541,9 @@ int checkBuff(){
         #endif
         
         strcpy(RxBuff, "");
+        strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[0])));
+        GsmMakeSmsChar(msgChar);
+        delay_ms(5000);
         return 1;
     } 
 
@@ -2238,6 +2248,10 @@ void setup() {
   strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[0])));
   GsmMakeSmsChar(msgChar); 
   #endif
+
+  strcpy_P(msgChar, (char*)pgm_read_word(&(string_table[8])));
+  GsmMakeSmsChar(msgChar);
+  delay_ms(5000);
 }
 
 void loop() {
