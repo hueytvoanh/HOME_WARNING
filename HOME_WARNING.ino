@@ -551,9 +551,9 @@ int checkBuff(){
         return 1;
     } 
 
-    outputInfor = strstr (RxBuff,"OFF");
+    outputInfor = strstr (RxBuff,"RELAY");
     if(outputInfor) {   
-        smsControl = 3;
+        relayActive = true;
         strcpy(RxBuff, "");
         return 1;
     }   
@@ -1429,7 +1429,7 @@ void relayControl(int relayTimer){
     if(relayActive == true){
         digitalWrite(OUTPUT_RELAY, RELAY_ACTIVE); 
         if(relayTimer = 5){
-             delay(5000);
+             delay(10000);
         }
         else{
             delay(60000);    
@@ -1489,8 +1489,9 @@ int displaySystemState(){
             }
             break;    
         case SYSTEM_WARNING:
+            digitalWrite(OUTPUT_RELAY, RELAY_ACTIVE);
             makeCall();
-            relayActive = true;
+             = true;
             for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
                 displayLed7(vAcq_L_Config, LED7_GSM_CODE_E4);  
             }
