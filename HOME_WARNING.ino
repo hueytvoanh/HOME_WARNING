@@ -1492,7 +1492,6 @@ int displaySystemState(){
             digitalWrite(OUTPUT_RELAY, RELAY_ACTIVE);
             delay_ms(1000);
             makeCall();
-             = true;
             for(int i = 0; i < LED7_CONFIG_BEGIN; i++){
                 displayLed7(vAcq_L_Config, LED7_GSM_CODE_E4);  
             }
